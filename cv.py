@@ -11,7 +11,8 @@ def imgshow(name, img):
     cv2.waitKey(0)
 
 
-img = cv2.imread('/Users/aditummala/Desktop/gametheory/homefuns/connect4.jpeg')
+img = cv2.imread(
+    '/Users/aditummala/Desktop/gametheory-cv/images/connect4.jpeg')
 
 # Constants
 new_width = 500
@@ -94,7 +95,7 @@ mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
 img_yellow = cv2.bitwise_and(img, img, mask=mask_yellow)
 imgshow("Yellow Mask", img_yellow)
 
-# Identify Colours
+# Identify Colors
 grid = np.zeros((rows, cols))
 id_red = 1
 id_yellow = -1
