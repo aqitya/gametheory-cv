@@ -100,19 +100,45 @@ imgshow("Red Mask", img_red)
 
 lower_black = np.array([0, 0, 0])
 # Adjust the value here to detect more/less shades of black
-upper_black = np.array([180, 80, 40])
+upper_black = np.array([180, 180, 50])
 mask_black = cv2.inRange(img_hsv, lower_black, upper_black)
 img_black = cv2.bitwise_and(img, img, mask=mask_black)
 imgshow("Black Mask", img_black)
 
-# Invert the masks to have a white background
-mask_red_inv = cv2.bitwise_not(mask_red)
-mask_black_inv = cv2.bitwise_not(mask_black)
+# Create a blank canvas of the same size as your image
+img_circle_mask = np.zeros((img_h, img_w), dtype=np.uint8)
 
-# Apply the masks
-img_red_white_bg = cv2.bitwise_and(img, img, mask=mask_red_inv)
-img_black_white_bg = cv2.bitwise_and(img, img, mask=mask_black_inv)
+# Draw the detected circle contours on the canvas to create a mask of circles
+cv2.drawContours(img_circle_mask, contour_list, -1, (255), thickness=-1)
 
+# Combine the circle mask with the red and black masks
+mask_red_circles = cv2.bitwise_and(mask_red, img_circle_mask)
+mask_black_circles = cv2.bitwise_and(mask_black, img_circle_mask)
+
+# Invert the red and black masks with circles
+mask_red_circles_inv = cv2.bitwise_not(mask_red_circles)
+mask_black_circles_inv = cv2.bitwise_not(mask_black_circles)
+
+# Create a blank white canvas of the same size as your image
+img_white_canvas = np.ones_like(img) * 255
+
+# Apply the inverse masks with circles to the white canvas
+img_red_white_bg = cv2.bitwise_and(
+    img_white_canvas, img_white_canvas, mask=mask_red_circles_inv)
+img_black_white_bg = cv2.bitwise_and(
+    img_white_canvas, img_white_canvas, mask=mask_black_circles_inv)
+
+# Overlay the pieces on the white background
+img_red_on_white = cv2.bitwise_or(img_red_white_bg, img_red)
+img_black_on_white = cv2.bitwise_or(img_black_white_bg, img_black)
+
+# Display the results
+imgshow("Red on White Background", img_red_on_white)
+imgshow("Black on White Background", img_black_on_white)
+
+# Display the results
+imgshow("Red on White Background", img_red_on_white)
+imgshow("Black on White Background", img_black_on_white)
 # Identify Colors
 grid = np.zeros((rows, cols))
 id_red = 1
@@ -125,19 +151,25 @@ for x_i in range(0, cols):
     for y_i in range(0, rows):
         y = int(min_y + y_i * row_spacing)
         r = int((mean_h + mean_w)/5)
-        img_grid_circle = np.zeros((img_h, img_w))
+
+        # Create a blank canvas for drawing the circle
+        img_grid_circle = np.zeros((img_h, img_w), dtype=np.uint8)
+
+        # Draw the circle on the canvas
         cv2.circle(img_grid_circle, (x, y), r, (255, 255, 255), thickness=-1)
-        img_res_red = cv2.bitwise_and(
-            img_grid_circle, img_grid_circle, mask=img_red_white_bg)
-        img_grid_circle = np.zeros((img_h, img_w))
-        cv2.circle(img_grid_circle, (x, y), r, (255, 255, 255), thickness=-1)
-        img_res_black = cv2.bitwise_and(
-            img_grid_circle, img_grid_circle, mask=img_black_white_bg)
+
+        # Extract the ROI from the red and black masks
+        img_res_red = cv2.bitwise_and(mask_red_circles, img_grid_circle)
+        img_res_black = cv2.bitwise_and(mask_black_circles, img_grid_circle)
+
+        # Draw the grid overlay
         cv2.circle(img_grid_overlay, (x, y), r, (0, 255, 0), thickness=1)
-        if img_res_red.any() != 0:
+
+        # Check the ROIs
+        if np.any(img_res_red):
             grid[y_i][x_i] = id_red
             cv2.circle(img_grid, (x, y), r, (0, 0, 255), thickness=-1)
-        elif img_res_black.any() != 0:
+        elif np.any(img_res_black):
             grid[y_i][x_i] = id_yellow
             cv2.circle(img_grid, (x, y), r, (255, 255, 255), thickness=-1)
 
