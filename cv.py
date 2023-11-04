@@ -11,7 +11,7 @@ def imgshow(name, img):
     cv2.waitKey(0)
 
 
-img = cv2.imread('/Users/aditummala/Desktop/gametheory/homefuns/connect4.jpeg')
+img = cv2.imread('./images/connect4.jpeg')
 
 # Constants
 new_width = 500
@@ -23,7 +23,7 @@ img = cv2.resize(img, (img_w, img_h), interpolation=cv2.INTER_AREA)
 img_orig = img.copy()
 imgshow('Original Image (Resized)', img_orig)
 
-# Bilateral Filter
+# Bilateral Filter 
 bilateral_filtered_image = cv2.bilateralFilter(img, 15, 190, 190)
 imgshow('Bilateral Filter', bilateral_filtered_image)
 
