@@ -11,7 +11,8 @@ def imgshow(name, img):
     cv2.waitKey(0)
 
 
-img = cv2.imread('/Users/aditummala/Desktop/gametheory/homefuns/connect4.jpeg')
+img = cv2.imread(
+    '/Users/aditummala/Desktop/gametheory-cv/images/connect4.jpeg')
 
 # Constants
 new_width = 500
