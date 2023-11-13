@@ -12,7 +12,7 @@ def imgshow(name, img):
 
 
 img = cv2.imread(
-    '/Users/aditummala/Desktop/gametheory-cv/images/connect4.jpeg')
+    '/Users/aditummala/Desktop/gametheory-cv/result_image2.png')
 
 # Constants
 new_width = 500

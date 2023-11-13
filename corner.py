@@ -1,160 +1,189 @@
-# Modules
 import cv2
 import numpy as np
+from scipy.spatial import distance as dist
 
-# Functions
-
-
-def imgshow(name, img):
-    cv2.imshow(name, img)
-    cv2.moveWindow(name, 200, 200)
-    cv2.waitKey(0)
+# Adjusting the green color range based on typical green hue values in HSV
+# Hue values for green usually fall between 40 and 80 in OpenCV
+tighter_green_range = np.array([[40, 0, 127], [80, 243, 255]])
 
 
-img = cv2.imread(
-    '/Users/aditummala/Desktop/gametheory-cv/images/centered.jpg')
+def find_specific_green_objects(image, color_range):
+    # Convert image to HSV color space
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-# Constants
-new_width = 500
-img_h, img_w, _ = img.shape
-scale = new_width / img_w
-img_w = int(img_w * scale)
-img_h = int(img_h * scale)
-img = cv2.resize(img, (img_w, img_h), interpolation=cv2.INTER_AREA)
-img_orig = img.copy()
-imgshow('Original Image (Resized)', img_orig)
+    # Threshold the HSV image to get only colors in the specified range
+    mask = cv2.inRange(hsv, color_range[0], color_range[1])
 
-# Bilateral Filter
-bilateral_filtered_image = cv2.bilateralFilter(img, 15, 190, 190)
-imgshow('Bilateral Filter', bilateral_filtered_image)
+    # Find contours
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-# Outline Edges
-edge_detected_image = cv2.Canny(bilateral_filtered_image, 75, 150)
-imgshow('Edge Detection', edge_detected_image)
-
-# Find Circles
-contours, hierarchy = cv2.findContours(
-    edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-contour_list = []
-rect_list = []
-position_list = []
-
-for contour in contours:
-    perimeter = cv2.arcLength(contour, True)
-    area = cv2.contourArea(contour)
-    if perimeter == 0:  # To avoid division by zero
-        continue
-    circularity = 4 * np.pi * (area / (perimeter ** 2))
-
-    # Define a minimum circularity threshold for what you consider a circle
-    # This can be adjusted based on how lenient you want to be
-    circularity_threshold = 0.4
-
-    # Optionally, you could also check the size of the area
-    min_area_threshold = 50  # This can be adjusted based on your specific needs
-
-    if circularity > circularity_threshold and area > min_area_threshold:
-        contour_list.append(contour)
-        # Compute the center of the contour
-        M = cv2.moments(contour)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-            position_list.append((cX, cY))
-
-print(position_list)
-
-
-def find_connect_four_grid(contour_list, expected_rows=6, expected_columns=7, tolerance=0.2):
-    """
-    Try to find a grid pattern in the detected circles.
-
-    :param contour_list: List of contours that are potential circles.
-    :param expected_rows: Expected number of rows in the grid.
-    :param expected_columns: Expected number of columns in the grid.
-    :param tolerance: Allowed deviation from the mean distance to consider as a grid.
-    :return: Grid of circles if found, otherwise None.
-    """
-    # Calculate the centroids of the contours
+    # Calculate the centroid of each contour and draw it on the image
     centroids = []
-    for contour in contour_list:
-        M = cv2.moments(contour)
+    for cnt in contours:
+        M = cv2.moments(cnt)
         if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
             centroids.append((cX, cY))
+            # Draw the contour and centroid on the image
+            cv2.drawContours(image, [cnt], -1, (0, 255, 0), 2)
+            cv2.circle(image, (cX, cY), 5, (255, 0, 0), -1)
 
-    # Sort the centroids, first by y-coordinate, then by x-coordinate
-    centroids = sorted(centroids, key=lambda x: (x[1], x[0]))
-
-    # Try to align centroids to a grid
-    # Starting with the first centroid, check if there are expected_columns - 1 more centroids
-    # within a certain x-distance, and expected_rows - 1 more centroids within a certain y-distance
-    for i, centroid in enumerate(centroids):
-        grid = [centroid]
-        x0, y0 = centroid
-
-        # Find neighbors in the same row
-        for dx in range(1, expected_columns):
-            neighbor = next((c for c in centroids if abs(
-                c[0] - (x0 + dx * mean_x_dist)) < tolerance * mean_x_dist and abs(c[1] - y0) < tolerance * mean_y_dist), None)
-            if neighbor:
-                grid.append(neighbor)
-
-        # If we found a full row, try to build the full grid
-        if len(grid) == expected_columns:
-            full_grid = [grid]
-            for dy in range(1, expected_rows):
-                row = []
-                for dx in range(expected_columns):
-                    neighbor = next((c for c in centroids if abs(c[0] - (grid[dx][0])) < tolerance * mean_x_dist and abs(
-                        c[1] - (grid[0][1] + dy * mean_y_dist)) < tolerance * mean_y_dist), None)
-                    if neighbor:
-                        row.append(neighbor)
-                if len(row) == expected_columns:
-                    full_grid.append(row)
-                else:
-                    break  # Row not complete, grid not valid
-
-            # If we built a full grid, return it
-            if len(full_grid) == expected_rows:
-                return full_grid
-
-    # If we reach this point, we didn't find a valid grid
-    return None
+    return image, centroids
 
 
-# Calculate mean distances for x and y between circles
-x_distances = []
-y_distances = []
-for i, (x1, y1) in enumerate(position_list[:-1]):
-    for x2, y2 in position_list[i+1:]:
-        x_distances.append(abs(x1 - x2))
-        y_distances.append(abs(y1 - y2))
+# Load the main image again
+main_image_specific_green = cv2.imread('./images/new_emeralds.png')
+if main_image_specific_green is None:
+    raise FileNotFoundError("The main image could not be loaded.")
 
-# Finding a grid from nothing does not involve anything else at all.
+# Find specific green objects and their centroids
+result_image_specific_green, specific_green_centroids = find_specific_green_objects(
+    main_image_specific_green, tighter_green_range)
 
+# Save the result
+result_image_specific_green_path = 'result_with_specific_green_centroids.png'
+cv2.imwrite(result_image_specific_green_path, result_image_specific_green)
 
-# Instead, do the following to ensure that there is nothing.
+specific_green_centroids, result_image_specific_green_path
 
-mean_x_dist = np.mean([dist for dist in x_distances if dist != 0])
-mean_y_dist = np.mean([dist for dist in y_distances if dist != 0])
-
-# Now we can try to find the grid
-grid = find_connect_four_grid(contour_list)
-
-if grid and len(grid) == 42:
-    print("Found a Connect 4 grid with the correct number of circles.")
-else:
-    print("Did not find a valid Connect 4 grid.")
+# We will modify the function to find centroids to only consider the four largest green areas by area.
 
 
-img_circle_contours = img_orig.copy()
-cv2.drawContours(img_circle_contours, contour_list,  -1,
-                 (0, 255, 0), thickness=1)  # Display Circles
-for rect in rect_list:
-    x, y, w, h = rect
-    cv2.rectangle(img_circle_contours, (x, y), (x+w, y+h), (0, 0, 255), 1)
+def find_largest_green_centroids(image, color_range, num_largest=4):
+    # Convert image to HSV color space
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-imgshow('Circles Detected', img_circle_contours)
+    # Threshold the HSV image to get only colors in the specified range
+    mask = cv2.inRange(hsv, color_range[0], color_range[1])
+
+    # Find contours
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Sort the contours by area and grab the largest ones
+    largest_contours = sorted(contours, key=cv2.contourArea, reverse=True)[
+        :num_largest]
+
+    # Calculate the centroid of each of the largest contours and draw it on the image
+    largest_centroids = []
+    for cnt in largest_contours:
+        M = cv2.moments(cnt)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            largest_centroids.append((cX, cY))
+            # Draw the contour and centroid on the image
+            cv2.drawContours(image, [cnt], -1, (0, 255, 0), 2)
+            cv2.circle(image, (cX, cY), 5, (255, 0, 0), -1)
+
+    return image, largest_centroids
+
+
+# Use the function to find the centroids of the four largest green areas
+result_image_largest_green, largest_green_centroids = find_largest_green_centroids(
+    main_image_specific_green.copy(), tighter_green_range)
+
+# Save the result
+result_image_largest_green_path = 'result_with_specific_green_centroids.png'
+cv2.imwrite(result_image_largest_green_path, result_image_largest_green)
+
+print(largest_green_centroids)
+
+
+src_pts = np.array(largest_green_centroids, dtype='float32')
+
+# Find the minimum and maximum x and y coordinates from the centroids
+min_x = min(c[0] for c in largest_green_centroids)
+max_x = max(c[0] for c in largest_green_centroids)
+min_y = min(c[1] for c in largest_green_centroids)
+max_y = max(c[1] for c in largest_green_centroids)
+
+# Use these coordinates to define the bounding rectangle and extract the ROI
+roi = main_image_specific_green[min_y:max_y, min_x:max_x]
+
+# Save the extracted ROI
+roi_image_path = '/mnt/data/extracted_roi.png'
+cv2.imwrite(roi_image_path, roi)
+width = max_x - min_x
+height = max_y - min_y
+
+# Redefine the order_points function with scipy.spatial.distance
+
+
+def order_points(pts):
+    # Sort the points based on their x-coordinates
+    x_sorted = pts[np.argsort(pts[:, 0]), :]
+
+    # Grab the left-most and right-most points from the sorted x-coordinate points
+    left_most = x_sorted[:2, :]
+    right_most = x_sorted[2:, :]
+
+    # Now, sort the left-most coordinates according to their y-coordinates
+    # to grab the top-left and bottom-left points, respectively
+    left_most = left_most[np.argsort(left_most[:, 1]), :]
+    (tl, bl) = left_most
+
+    # Now that we have the top-left point, with a simple calculation we can find the bottom-right and top-right points
+    # Calculate the Euclidean distance between the top-left and right-most points
+    # The point with the maximum distance will be the bottom-right point
+    D = dist.cdist(tl[np.newaxis], right_most, "euclidean")[0]
+    (br, tr) = right_most[np.argsort(D)[::-1], :]
+
+    # Return the coordinates in top-left, top-right, bottom-right, and bottom-left order
+    return np.array([tl, tr, br, bl], dtype="float32")
+
+
+# Use the order_points function to arrange the centroids properly
+ordered_pts = order_points(np.array(largest_green_centroids))
+
+# Now we can perform the perspective warp with the ordered points
+# The destination points will be a rectangle based on the maximum width and height we found
+dst_pts = np.array([
+    [0, 0],
+    [width - 1, 0],
+    [width - 1, height - 1],
+    [0, height - 1]
+], dtype="float32")
+
+
+def deflate_points(points, deflate_amount):
+    # Calculate the center of the rectangle
+    center_x = np.mean([point[0] for point in points])
+    center_y = np.mean([point[1] for point in points])
+
+    # Move each point towards the center by the deflate amount
+    new_points = []
+    for point in points:
+        if point[0] < center_x:
+            new_x = point[0] + deflate_amount
+        else:
+            new_x = point[0] - deflate_amount
+
+        if point[1] < center_y:
+            new_y = point[1] + deflate_amount
+        else:
+            new_y = point[1] - deflate_amount
+
+        new_points.append((new_x, new_y))
+
+    return np.array(new_points, dtype='float32')
+
+
+# Deflate the points by 50 pixels
+deflated_pts = deflate_points(ordered_pts, 25)
+
+# The destination points will remain the same as before (a rectangle)
+# Compute the new perspective transform matrix with the deflated points
+M_deflated = cv2.getPerspectiveTransform(deflated_pts, dst_pts)
+
+# Warp the perspective to transform the image using the deflated points
+deflated_warped_image = cv2.warpPerspective(
+    main_image_specific_green, M_deflated, (width, height))
+
+# Save the deflated warped image
+deflated_warped_image_path = 'deflated_warped_image.png'
+cv2.imwrite(deflated_warped_image_path, deflated_warped_image)
+
+deflated_warped_image_path
