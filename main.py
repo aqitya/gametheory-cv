@@ -27,12 +27,27 @@ def find_color_image(color, img):
     return img_masked
 
 def is_coord_color(color, coord):
-    lower_bound = tuple([x - 20 for x in color])
-    upper_bound = tuple([x + 20 for x in color])
-    print(lower_bound)
-    masked = CV.inRange(coord, lower_bound, upper_bound)
-    img_masked = CV.bitwise_and(coord, coord, mask=masked)
-    points = CV.findNonZero(masked)
+    #lower_bound = tuple([x - 20 for x in color])
+    #upper_bound = tuple([x + 20 for x in color])
+    #print(lower_bound)
+    is_bounds = True
+    for i in range(0, len(color)):
+        if not(abs(color[i] - coord[i]) < 50):
+            print(color[i])
+            print(coord[i])
+            print(abs(color[i] - coord[i]))
+            print(abs(color[i] - coord[i]) < 50)
+            return False
+    # if is_bounds:
+    #     return is_bounds
+    # for i in range(0, len(color)):
+    #     if not(abs(color[i] + coord[i]) <= 40):
+    #         is_bounds = False
+    #         break
+    return is_bounds
+    #masked = CV.inRange(coord, lower_bound, upper_bound)
+    #img_masked = CV.bitwise_and(coord, coord, mask=masked)
+    #points = CV.findNonZero(masked)
     
 
 def game_board_color(board_color, img):
@@ -71,7 +86,7 @@ def game_board_dimensions(points, img_masked):
     min_y = min([x[0][1] for x in points])
     max_x = max([x[0][0] for x in points])
     max_y = max([x[0][1] for x in points])
-    print(min_x, min_y, max_x, max_y)
+    #print(min_x, min_y, max_x, max_y)
     start = [min_x, min_y]
     end = [max_x, max_y]
     step_x = ((max_x - min_x) / GRID[0]) + 1
@@ -96,11 +111,22 @@ def game_board_dimensions(points, img_masked):
     #CV.imshow(img_masked)
 
 def update_board(img, player):
-    for y in PIXEL_BOARD:
-        for x in y:
-            print(tuple(img[int(x[1])][int(x[0])]))
-            is_coord_color(player, tuple(img[int(x[1])][int(x[0])]))
-    pass
+    for y in range(0, len(PIXEL_BOARD)):
+        for x in range(0, len(PIXEL_BOARD[y])):
+            coord = tuple(img[int(PIXEL_BOARD[x][y][1])][int(PIXEL_BOARD[x][y][0])])
+            print(coord[::-1])
+            print(player)
+            if is_coord_color(player, coord[::-1]):
+                BOARD[x][y] =  player_name(player)
+    print(BOARD)
+
+def player_name(color):
+    if color == PLAYER1_COLOR:
+        return 1
+    elif color == PLAYER2_COLOR:
+        return -1
+    else:
+        return 0
 
 #game_board(cyan)
 BOARD_COLOR = [168,122,45]
