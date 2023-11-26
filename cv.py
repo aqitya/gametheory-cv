@@ -11,8 +11,7 @@ def imgshow(name, img):
     cv2.waitKey(0)
 
 
-img = cv2.imread(
-    '/Users/aditummala/Desktop/gametheory-cv/result_image2.png')
+img = cv2.imread('./result_image2.png')
 
 # Constants
 new_width = 500
@@ -83,14 +82,26 @@ row_spacing = int(grid_height / (rows - 1))
 # Find Masks
 img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-lower_red = np.array([150, 150, 100])
-upper_red = np.array([255, 255, 255])
+black_lower = np.array([0, 0, 0])
+black_upper = np.array([80, 80, 80])
+
+yellow_lower = np.array([0, 0, 0])
+yellow_upper = np.array([80, 80, 80])
+
+red_lower = np.array([100, 0, 0])
+red_upper = np.array([255, 100, 100])
+
+
+lower_red = np.array([100, 0, 0])
+upper_red = np.array([255, 100, 100])
+
 mask_red = cv2.inRange(img_hsv, lower_red, upper_red)
 img_red = cv2.bitwise_and(img, img, mask=mask_red)
 imgshow("Red Mask", img_red)
 
-lower_yellow = np.array([10, 150, 100])
-upper_yellow = np.array([60, 255, 255])
+lower_yellow = np.array([0, 0, 0])
+upper_yellow = np.array([80, 80, 80])
+
 mask_yellow = cv2.inRange(img_hsv, lower_yellow, upper_yellow)
 img_yellow = cv2.bitwise_and(img, img, mask=mask_yellow)
 imgshow("Yellow Mask", img_yellow)
@@ -128,7 +139,6 @@ imgshow('Img Grid Overlay', img_grid_overlay)
 imgshow('Img Grid', img_grid)
 
 # Find Winner
-
 
 def check_winner(grid):
     rows, cols = len(grid), len(grid[0])

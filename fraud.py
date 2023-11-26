@@ -10,17 +10,22 @@ def imgshow(name, img):
 
 img = cv2.imread('deflated_warped_image.png')
 
+
 bgr_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 pixels = bgr_image.reshape(-1, 3)
+
+# kmeans = KMeans(n_clusters=3)
+# kmeans.fit(pixels)
+# dominant_colors = kmeans.cluster_centers_
 
 # Define color ranges
 black_lower = np.array([0, 0, 0])
 black_upper = np.array([80, 80, 80])
 
 yellow_lower = np.array([150, 100, 0])
-yellow_upper = np.array([255, 255, 80])
-
+yellow_upper = np.array([255, 255, 80])  
+                        
 red_lower = np.array([100, 0, 0])
 red_upper = np.array([255, 100, 100])
 
@@ -49,56 +54,28 @@ result_image = cv2.bitwise_and(img, img, mask=dominant_color_mask)
 result_image = cv2.bitwise_or(result_image, white_mask)
 
 
+# # Convert to grayscale and threshold the image to create a binary mask
+# gray_image = cv2.cvtColor(result_image, cv2.COLOR_RGB2GRAY)
+# _, binary_mask = cv2.threshold(gray_image, 200, 255, cv2.THRESH_BINARY)
+
+# # Invert the binary mask to identify empty cells
+# empty_mask = cv2.bitwise_not(binary_mask)
+
+# # Replace the empty cells with pure white
+# result_image = cv2.bitwise_and(result_image, result_image, mask=empty_mask)
+# result_image[binary_mask == 255] = [255, 255, 255]
+
+
+# Create a binary mask for the empty cells by inverting the color mask
+# empty_mask = cv2.bitwise_not(dominant_color_mask)
+
+# # Replace empty cells with pure white
+# result_image2 = np.copy(img)
+# result_image2[empty_mask > 0] = [255, 255, 255]
+
+
+
 imgshow('Pranay', result_image)
 
+
 cv2.imwrite('result_image2.png', result_image)
-
-
-def divide_into_grid(image, rows, cols):
-    # Get the dimensions of the image
-    height, width, _ = image.shape
-
-    # Calculate the size of each grid cell
-    cell_height = height // rows
-    cell_width = width // cols
-
-    # Create a copy of the image to draw the grid
-    grid_image = image.copy()
-
-    # List to store the cell coordinates
-    cell_coordinates = []
-
-    # Iterate over each row and column to draw the grid and store the cell coordinates
-    for row in range(rows):
-        for col in range(cols):
-            start_x = col * cell_width
-            start_y = row * cell_height
-            end_x = (col + 1) * cell_width
-            end_y = (row + 1) * cell_height
-
-            # Store the top-left and bottom-right coordinates of the cell
-            cell_coordinates.append(((start_x, start_y), (end_x, end_y)))
-
-            # Draw the cell on the grid image
-            cv2.rectangle(grid_image, (start_x, start_y),
-                          (end_x, end_y), (0, 255, 0), 1)
-
-    return grid_image, cell_coordinates
-
-
-# Load the image
-image_path = 'result_image2.png'
-grid_image = cv2.imread(image_path)
-
-# Divide the image into a 6x7 grid and draw it
-rows, cols = 6, 7
-grid_image_with_cells, cells_coordinates = divide_into_grid(
-    grid_image, rows, cols)
-
-# Show the image with the grid
-cv2.imshow('Grid Image', grid_image_with_cells)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-# Save the image with the grid
-cv2.imwrite('grid_image_with_cells.png', grid_image_with_cells)
