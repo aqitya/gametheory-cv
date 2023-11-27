@@ -13,7 +13,7 @@ gamestate = [["-","-","-"],["-","-","-"],["-","-","-"]]
 #kernel used for noise removal
 kernel =  np.ones((7,7),np.uint8)
 # Load a color image 
-img = cv2.imread('/Users/pranayrajpaul/Desktop/gamescrafters/gametheory-cv/images/tic.jpg')
+img = cv2.imread('/Users/pranayrajpaul/Desktop/gamescrafters/gametheory-cv/images/tica.jpeg')
 # get the image width and height
 img_width = img.shape[0]
 img_height = img.shape[1]
