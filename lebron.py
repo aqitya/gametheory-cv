@@ -1,3 +1,4 @@
+# This was a playground file looking at how others have implemented similar projects
 import numpy as np
 import cv2
 
