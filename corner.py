@@ -40,7 +40,7 @@ def find_specific_green_objects(image, color_range):
 
 
 # Load the main image again
-main_image_specific_green = cv2.imread('./images/new_emeralds.png')
+main_image_specific_green = cv2.imread('./images/corners.png')
 if main_image_specific_green is None:
     raise FileNotFoundError("The main image could not be loaded.")
 

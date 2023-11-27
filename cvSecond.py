@@ -40,6 +40,7 @@ for i in range(1, 6):
     cv2.line(grid_image, (0, i * cell_height), (img_w, i * cell_height), (0, 255, 0), 1)
 
 # Display the image with the grid
+cv2.imwrite('grid_image_with_cells.png', grid_image)
 imgshow('Grid Image', grid_image)
 
 
@@ -145,9 +146,9 @@ def check_winner(grid):
 
 result = check_winner(grid)
 if result == 1:
-    print("Player 2 (Red) wins!")
+    print("Player 1 (Red) wins!")
 elif result == -1:
-    print("Player 1 (Yellow) wins!")
+    print("Player 2 (Black) wins!")
 else:
     print("The game is still ongoing or it's a draw.")
 
