@@ -1,9 +1,6 @@
-# Modules
 import cv2
 import numpy as np
 from colorthief import ColorThief
-
-# Functions
 
 
 def imgshow(name, img):
@@ -93,11 +90,10 @@ def process_cell(img, x_start, y_start, width, height):
             red_mask = cv2.inRange(hsv_circle_img, RED_LOWER_HSV, RED_UPPER_HSV)
             black_mask = cv2.inRange(hsv_circle_img, BLACK_LOWER_HSV, BLACK_UPPER_HSV)
 
-            # Check if red or black is the dominant color in the circle
             if is_color_dominant(red_mask):
-                return 1  # Red circle detected
+                return 1  # Red 
             elif is_color_dominant(black_mask):
-                return -1  # Black circle detected
+                return -1  # Black 
 
     # No circles detected or not the right color
     return 0
@@ -157,7 +153,6 @@ else:
 
 # grid to position string conversion
 
-
 def grid_to_position_string(grid):
     turn = 1
     position_string = f''
@@ -184,7 +179,6 @@ print(position_string)
 
 
 # only one move difference from grid to second_grid
-
 def diff_one_move(grid, second_grid):
     first_grid_string = grid_to_position_string(grid)
     compare_string = first_grid_string[8:]

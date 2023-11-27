@@ -2,6 +2,12 @@ import cv2
 import numpy as np
 from scipy.spatial import distance as dist
 
+def imgshow(name, img):
+    cv2.imshow(name, img)
+    cv2.moveWindow(name, 200, 200)
+    cv2.waitKey(0)
+
+
 # Adjusting the green color range based on typical green hue values in HSV
 # Hue values for green usually fall between 40 and 80 in OpenCV
 tighter_green_range = np.array([[40, 0, 127], [80, 243, 255]])
@@ -88,6 +94,8 @@ result_image_largest_green, largest_green_centroids = find_largest_green_centroi
 # Save the result
 result_image_largest_green_path = 'result_with_specific_green_centroids.png'
 cv2.imwrite(result_image_largest_green_path, result_image_largest_green)
+
+imgshow('Adi', result_image_largest_green)
 
 print(largest_green_centroids)
 
@@ -185,5 +193,7 @@ deflated_warped_image = cv2.warpPerspective(
 # Save the deflated warped image
 deflated_warped_image_path = 'deflated_warped_image.png'
 cv2.imwrite(deflated_warped_image_path, deflated_warped_image)
+
+imgshow('Adi', deflated_warped_image)
 
 deflated_warped_image_path
